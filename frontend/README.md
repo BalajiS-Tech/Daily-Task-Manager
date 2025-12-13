@@ -1,0 +1,1 @@
+Frontend setup: npm install && npm run dev
