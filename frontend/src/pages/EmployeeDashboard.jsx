@@ -1,54 +1,68 @@
-import React, { useState } from 'react';
-import TaskForm from '../components/TaskForm.jsx';
-import TaskCard from '../components/TaskCard.jsx';
-import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import React from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { notifySuccess, notifyError } from '../components/Notification.jsx';
+import TaskCard from '../components/TaskCard.jsx';
+import { notifyError, notifySuccess } from '../components/Notification.jsx';
 
-const GET_TASKS = gql`query Tasks{ tasks{ id title description status dueDate assignedTo{ id name } createdBy{ id name } } }`;
-const DELETE_TASK = gql`mutation Delete($id: ID!){ deleteTask(id: $id) }`;
+const GET_MY_TASKS = gql`
+  query MyTasks($assignedTo: ID!) {
+    tasks(assignedTo: $assignedTo) {
+      id
+      title
+      description
+      status
+      dueDate
+      createdBy { id name }
+    }
+  }
+`;
+
+const UPDATE_STATUS = gql`
+  mutation UpdateStatus($id: ID!, $status: String!) {
+    updateTaskStatus(id: $id, status: $status) {
+      id
+      status
+    }
+  }
+`;
 
 export default function EmployeeDashboard({ user }) {
-  const { loading, error, data, refetch } = useQuery(GET_TASKS);
-  const [deleteTask] = useMutation(DELETE_TASK);
-  const [editing, setEditing] = useState(null);
-  const [showDialog, setShowDialog] = useState(false);
-  const [toDelete, setToDelete] = useState(null);
+  const { loading, error, data, refetch } = useQuery(GET_MY_TASKS, {
+    variables: { assignedTo: user.id }
+  });
 
-  const handleAdded = () => refetch();
+  const [updateStatus] = useMutation(UPDATE_STATUS);
 
-  const handleDelete = (task) => {
-    // only allow deleting if user created the task or user is manager
-    const current = localStorage.getItem('taskmanager_user');
-    const me = current ? JSON.parse(current) : null;
-    if (!me) return notifyError('Not authorized');
-    if (String(task.createdBy?.id || task.createdBy) !== String(me.id) && me.role !== 'manager') {
-      return notifyError('You cannot delete manager-assigned task');
-    }
-    setToDelete(task); setShowDialog(true);
-  };
-
-  const confirmDelete = async () => {
+  const handleStatusChange = async (taskId, status) => {
     try {
-      await deleteTask({ variables: { id: toDelete.id } });
-      notifySuccess('Task deleted');
+      await updateStatus({ variables: { id: taskId, status } });
+      notifySuccess('Status updated');
       refetch();
-    } catch (err) { notifyError('Delete failed'); }
-    setShowDialog(false);
+    } catch (err) {
+      notifyError('Failed to update status');
+    }
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>Loading my tasks...</p>;
   if (error) return <p>Error loading tasks</p>;
 
   return (
     <div>
-      <h2 className='text-2xl font-semibold mb-4'>Employee Dashboard</h2>
-      <TaskForm onAdded={handleAdded} />
-      <div className='grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6'>
-        {data.tasks.map(t => <TaskCard key={t.id} task={t} onEdit={setEditing} onDelete={handleDelete} />)}
-      </div>
+      <h2 className="text-2xl font-semibold mb-4">My Tasks</h2>
 
-      <ConfirmDialog open={showDialog} title='Delete Task?' message={`Delete "${toDelete?.title}"?`} onConfirm={confirmDelete} onCancel={()=>setShowDialog(false)} />
+      {data.tasks.length === 0 ? (
+        <p className="text-gray-500">No tasks assigned yet.</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data.tasks.map(task => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onStatusChange={handleStatusChange}
+              employeeView
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

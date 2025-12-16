@@ -4,15 +4,13 @@ import Header from './components/Header.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import ManagerDashboard from './pages/ManagerDashboard.jsx';
-import EmployeeDashboard from './pages/EmployeeDashboard.jsx';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function App() {
   const [user, setUser] = useState(null);
 
-  useEffect(()=> {
+  useEffect(() => {
     const raw = localStorage.getItem('taskmanager_user');
     if (raw) setUser(JSON.parse(raw));
   }, []);
@@ -30,19 +28,37 @@ export default function App() {
   };
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className="min-h-screen bg-gray-50">
       <Header user={user} onLogout={handleLogout} />
-      <main className='max-w-6xl mx-auto p-6'>
+
+      <main className="max-w-6xl mx-auto p-6">
         <Routes>
-          <Route path='/' element={user ? <Navigate to='/dashboard'/> : <Navigate to='/login'/>} />
-          <Route path='/login' element={<Login onLogin={handleLogin} />} />
-          <Route path='/signup' element={<Signup onSignup={handleLogin} />} />
-          <Route path='/dashboard' element={user ? <Dashboard user={user}/> : <Navigate to='/login'/>} />
-          <Route path='/manager' element={user && user.role==='manager' ? <ManagerDashboard user={user}/> : <Navigate to='/dashboard'/>} />
-          <Route path='/employee' element={user && user.role==='employee' ? <EmployeeDashboard user={user}/> : <Navigate to='/dashboard'/>} />
+          <Route
+            path="/"
+            element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/login"
+            element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />}
+          />
+
+          <Route
+            path="/signup"
+            element={!user ? <Signup onSignup={handleLogin} /> : <Navigate to="/dashboard" />}
+          />
+
+          <Route
+            path="/dashboard"
+            element={user ? <Dashboard user={user} /> : <Navigate to="/login" />}
+          />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
-      <ToastContainer position='top-right' autoClose={2200} />
+
+      <ToastContainer position="top-right" autoClose={2200} />
     </div>
   );
 }

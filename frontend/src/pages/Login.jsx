@@ -33,24 +33,34 @@ export default function Login({ onLogin }) {
         },
       });
 
+      if (!data?.login?.token || !data?.login?.user) {
+        throw new Error('Login failed. Invalid server response.');
+      }
+
       const { token, user } = data.login;
 
-      // ✅ Store auth
-      localStorage.setItem('taskmanager_token', token);
+      // ✅ localStorage only accepts strings
+      localStorage.setItem('taskmanager_token', String(token));
       localStorage.setItem('taskmanager_user', JSON.stringify(user));
 
       notifySuccess('Logged in successfully');
 
-      // ✅ ROLE-BASED REDIRECT
+      // ✅ Role-based redirect
       if (user.role === 'manager') {
-        navigate('/dashboard'); // manager dashboard
+        navigate('/dashboard');
       } else {
-        navigate('/tasks'); // employee task page
+        navigate('/tasks');
       }
 
       onLogin && onLogin(user, token);
     } catch (err) {
-      notifyError(err.message.replace('GraphQL error: ', ''));
+      // ✅ SAFE error handling
+      const message =
+        err?.message ||
+        err?.graphQLErrors?.[0]?.message ||
+        'Login failed';
+
+      notifyError(message);
     }
   };
 
