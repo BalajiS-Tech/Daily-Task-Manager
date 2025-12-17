@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Task from '../models/Task.js';
 import { signToken } from '../auth.js';
@@ -17,10 +18,16 @@ export const resolvers = {
       return User.find(filter).select('-passwordHash');
     },
 
+    // ✅ FIXED: assignedTo ObjectId casting
     tasks: async (_, { status, assignedTo, category }) => {
       const filter = {};
+
       if (status) filter.status = status;
-      if (assignedTo) filter.assignedTo = assignedTo;
+
+      if (assignedTo) {
+        filter.assignedTo = new mongoose.Types.ObjectId(assignedTo);
+      }
+
       if (category) filter.category = category;
 
       const tasks = await Task.find(filter).sort({ createdAt: -1 });
@@ -44,6 +51,7 @@ export const resolvers = {
       if (existing) throw new Error('Email already in use');
 
       const passwordHash = await bcrypt.hash(password, SALT);
+
       const user = await User.create({
         name,
         email,

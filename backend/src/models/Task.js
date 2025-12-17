@@ -1,16 +1,63 @@
 import mongoose from 'mongoose';
 
-const taskSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: String,
-  category: { type: String, default: 'General' },
-  status: { type: String, enum: ['pending','in_progress','completed'], default: 'pending' },
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  dueDate: { type: Date },
-  daysToComplete: { type: Number },
-  completedAt: { type: Date, default: null },
-  createdAt: { type: Date, default: Date.now },
-});
+const taskSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: '',
+    },
+
+    category: {
+      type: String,
+      default: 'General',
+      index: true,
+    },
+
+    status: {
+      type: String,
+      enum: ['pending', 'in_progress', 'completed'],
+      default: 'pending',
+      index: true,
+    },
+
+    // ✅ IMPORTANT: indexed for fast employee dashboard lookup
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+
+    dueDate: {
+      type: Date,
+    },
+
+    daysToComplete: {
+      type: Number,
+      min: 0,
+    },
+
+    completedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true, // ✅ replaces manual createdAt
+  }
+);
 
 export default mongoose.model('Task', taskSchema);
