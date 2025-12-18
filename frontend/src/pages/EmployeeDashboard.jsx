@@ -27,8 +27,10 @@ const UPDATE_STATUS = gql`
 `;
 
 export default function EmployeeDashboard({ user }) {
+  const userId = String(user.id || user._id);
+
   const { loading, error, data, refetch } = useQuery(GET_MY_TASKS, {
-    variables: { assignedTo: user.id }
+    variables: { assignedTo: userId }
   });
 
   const [updateStatus] = useMutation(UPDATE_STATUS);

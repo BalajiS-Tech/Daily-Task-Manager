@@ -13,9 +13,20 @@ const GET_TASKS = gql`
       title
       description
       status
-      dueDate
       assignedTo { id name }
-      createdBy { id name }
+    }
+    users(role: "employee") {
+      id
+      name
+    }
+  }
+`;
+
+const ASSIGN_TASK = gql`
+  mutation AssignTask($taskId: ID!, $assignedTo: ID!) {
+    assignTask(taskId: $taskId, assignedTo: $assignedTo) {
+      id
+      assignedTo { id name }
     }
   }
 `;
@@ -26,16 +37,25 @@ const DELETE_TASK = gql`
   }
 `;
 
-export default function ManagerDashboard({ user }) {
+export default function ManagerDashboard() {
   const { loading, error, data, refetch } = useQuery(GET_TASKS);
+  const [assignTask] = useMutation(ASSIGN_TASK);
   const [deleteTask] = useMutation(DELETE_TASK);
+
   const [showDialog, setShowDialog] = useState(false);
   const [toDelete, setToDelete] = useState(null);
 
-  const handleAdded = () => refetch();
-  const handleDelete = (task) => {
-    setToDelete(task);
-    setShowDialog(true);
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error loading dashboard</p>;
+
+  const handleAssign = async (taskId, userId) => {
+    try {
+      await assignTask({ variables: { taskId, assignedTo: userId } });
+      notifySuccess('Task assigned');
+      refetch();
+    } catch {
+      notifyError('Assignment failed');
+    }
   };
 
   const confirmDelete = async () => {
@@ -49,37 +69,29 @@ export default function ManagerDashboard({ user }) {
     setShowDialog(false);
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error loading tasks</p>;
-
-  // 📊 Analytics calculations
-  const total = data.tasks.length;
-  const pending = data.tasks.filter(t => t.status === 'pending').length;
-  const inProgress = data.tasks.filter(t => t.status === 'in_progress').length;
-  const completed = data.tasks.filter(t => t.status === 'completed').length;
+  const { tasks, users } = data;
 
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Manager Dashboard</h2>
 
-      {/* 📊 Analytics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatsCard title="Total Tasks" value={total} />
-        <StatsCard title="Pending" value={pending} color="orange" />
-        <StatsCard title="In Progress" value={inProgress} color="purple" />
-        <StatsCard title="Completed" value={completed} color="green" />
+        <StatsCard title="Total" value={tasks.length} />
+        <StatsCard title="Pending" value={tasks.filter(t => t.status === 'pending').length} />
+        <StatsCard title="In Progress" value={tasks.filter(t => t.status === 'in_progress').length} />
+        <StatsCard title="Completed" value={tasks.filter(t => t.status === 'completed').length} />
       </div>
 
-      {/* Task creation */}
-      <TaskForm onAdded={handleAdded} />
+      <TaskForm onAdded={refetch} />
 
-      {/* Task list */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {data.tasks.map(task => (
+        {tasks.map(task => (
           <TaskCard
             key={task.id}
             task={task}
-            onDelete={handleDelete}
+            users={users}
+            onAssign={handleAssign}
+            onDelete={(t) => { setToDelete(t); setShowDialog(true); }}
           />
         ))}
       </div>

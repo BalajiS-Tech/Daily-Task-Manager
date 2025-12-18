@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
-import { useMutation, gql } from '@apollo/client';
+import { useMutation, useQuery, gql } from '@apollo/client';
 import { notifySuccess, notifyError } from './Notification.jsx';
+
+/* 🔹 Get employees */
+const GET_EMPLOYEES = gql`
+  query GetEmployees {
+    users(role: "employee") {
+      id
+      name
+      email
+    }
+  }
+`;
 
 const ADD_TASK = gql`
   mutation AddTask($input: TaskInput!) {
@@ -8,12 +19,15 @@ const ADD_TASK = gql`
       id
       title
       status
+      assignedTo { id name }
       createdAt
     }
   }
 `;
 
 export default function TaskForm({ onAdded }) {
+  const { data } = useQuery(GET_EMPLOYEES);
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -33,11 +47,10 @@ export default function TaskForm({ onAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Normalize payload to match GraphQL schema
     const input = {
       title: form.title.trim(),
       description: form.description || null,
-      category: form.category || 'General',
+      category: form.category,
       dueDate: form.dueDate || null,
       daysToComplete: form.daysToComplete
         ? Number(form.daysToComplete)
@@ -52,7 +65,7 @@ export default function TaskForm({ onAdded }) {
 
     try {
       await addTask({ variables: { input } });
-      notifySuccess('Task added successfully');
+      notifySuccess('Task added & assigned successfully');
 
       setForm({
         title: '',
@@ -103,6 +116,21 @@ export default function TaskForm({ onAdded }) {
         onChange={handleChange}
       />
 
+      {/* Assign to employee */}
+      <select
+        name="assignedTo"
+        className="w-full p-2 border rounded mb-3"
+        value={form.assignedTo}
+        onChange={handleChange}
+      >
+        <option value="">Assign to employee (optional)</option>
+        {data?.users.map(user => (
+          <option key={user.id} value={user.id}>
+            {user.name}
+          </option>
+        ))}
+      </select>
+
       {/* Due date & Days */}
       <div className="flex gap-3 items-center">
         <input
@@ -126,7 +154,7 @@ export default function TaskForm({ onAdded }) {
         <button
           type="submit"
           disabled={loading || !form.title.trim()}
-          className="ml-auto bg-primary text-white px-4 py-2 rounded disabled:opacity-50"
+          className="ml-auto bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {loading ? 'Adding...' : 'Add Task'}
         </button>

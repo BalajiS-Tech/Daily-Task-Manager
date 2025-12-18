@@ -1,76 +1,111 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function TaskCard({
   task,
-  onEdit,
+  users = [],
+  onAssign,
   onDelete,
   onStatusChange,
-  employeeView = false
+  employeeView = false,
 }) {
+  const [selectedUser, setSelectedUser] = useState('');
+
   return (
-    <div className="card">
+    <div className="card border rounded p-4 shadow-sm">
+      {/* Header */}
       <div className="flex justify-between items-start mb-2">
         <h3
-          className={
+          className={`font-semibold ${
             task.status === 'completed'
-              ? 'line-through text-gray-500'
-              : 'font-semibold'
-          }
+              ? 'line-through text-gray-400'
+              : ''
+          }`}
         >
           {task.title}
         </h3>
 
-        <span
-          className={`text-xs px-2 py-1 rounded ${
-            task.status === 'completed'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-yellow-100 text-yellow-800'
-          }`}
-        >
+        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
           {task.status}
         </span>
       </div>
 
-      {task.description && (
-        <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-      )}
+      {/* Description */}
+      <p className="text-sm text-gray-600 mb-2">
+        {task.description}
+      </p>
 
-      {task.createdBy && (
-        <div className="text-xs text-gray-500 mb-2">
-          Created by: <span className="font-semibold">{task.createdBy.name}</span>
-        </div>
-      )}
+      {/* Assignment info */}
+      <div className="text-xs text-gray-500 mb-3">
+        Assigned:
+        <span className="font-semibold ml-1">
+          {task.assignedTo?.name || 'Unassigned'}
+        </span>
+      </div>
 
-      {/* EMPLOYEE VIEW → STATUS UPDATE ONLY */}
-      {employeeView && (
-        <div className="flex justify-end mt-3">
-          <select
-            value={task.status}
-            onChange={(e) => onStatusChange(task.id, e.target.value)}
-            className="border rounded px-2 py-1 text-sm"
-          >
-            <option value="pending">Pending</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-      )}
-
-      {/* MANAGER VIEW → FULL ACTIONS */}
+      {/* 👨‍💼 MANAGER VIEW */}
       {!employeeView && (
+        <>
+          <select
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+            className="w-full border rounded px-2 py-1 text-sm mb-2"
+          >
+            <option value="">Assign to employee</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => onAssign(task.id, selectedUser)}
+              disabled={!selectedUser}
+              className="bg-blue-500 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
+            >
+              Assign
+            </button>
+
+            <button
+              onClick={() => onDelete(task)}
+              className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+            >
+              Delete
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* 👷 EMPLOYEE VIEW */}
+      {employeeView && (
         <div className="flex gap-2 justify-end mt-3">
-          <button
-            onClick={() => onEdit(task)}
-            className="bg-yellow-400 text-white px-3 py-1 rounded"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDelete(task)}
-            className="bg-red-500 text-white px-3 py-1 rounded"
-          >
-            Delete
-          </button>
+          {task.status !== 'pending' && (
+            <button
+              onClick={() => onStatusChange(task.id, 'pending')}
+              className="px-3 py-1 text-xs bg-gray-200 rounded"
+            >
+              Pending
+            </button>
+          )}
+
+          {task.status !== 'in_progress' && (
+            <button
+              onClick={() => onStatusChange(task.id, 'in_progress')}
+              className="px-3 py-1 text-xs bg-blue-500 text-white rounded"
+            >
+              In Progress
+            </button>
+          )}
+
+          {task.status !== 'completed' && (
+            <button
+              onClick={() => onStatusChange(task.id, 'completed')}
+              className="px-3 py-1 text-xs bg-green-500 text-white rounded"
+            >
+              Complete
+            </button>
+          )}
         </div>
       )}
     </div>
