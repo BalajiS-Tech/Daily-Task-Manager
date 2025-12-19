@@ -65,7 +65,7 @@ export default function TaskForm({ onAdded }) {
 
     try {
       await addTask({ variables: { input } });
-      notifySuccess('Task added & assigned successfully');
+      notifySuccess('Task created successfully');
 
       setForm({
         title: '',
@@ -83,13 +83,21 @@ export default function TaskForm({ onAdded }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card mb-6 p-4 border rounded">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white border rounded-xl p-5 shadow-sm mb-6"
+    >
+      {/* Header */}
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        Create New Task
+      </h3>
+
       {/* Title & Category */}
-      <div className="flex gap-3 mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
         <input
           name="title"
-          className="flex-1 p-2 border rounded"
-          placeholder="Task title"
+          className="md:col-span-2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          placeholder="Task title *"
           value={form.title}
           onChange={handleChange}
           required
@@ -97,7 +105,7 @@ export default function TaskForm({ onAdded }) {
 
         <select
           name="category"
-          className="p-2 border rounded"
+          className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           value={form.category}
           onChange={handleChange}
         >
@@ -110,33 +118,39 @@ export default function TaskForm({ onAdded }) {
       {/* Description */}
       <textarea
         name="description"
-        className="w-full p-2 border rounded mb-3"
-        placeholder="Task description"
+        rows="3"
+        className="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+        placeholder="Task description (optional)"
         value={form.description}
         onChange={handleChange}
       />
 
       {/* Assign to employee */}
-      <select
-        name="assignedTo"
-        className="w-full p-2 border rounded mb-3"
-        value={form.assignedTo}
-        onChange={handleChange}
-      >
-        <option value="">Assign to employee (optional)</option>
-        {data?.users.map(user => (
-          <option key={user.id} value={user.id}>
-            {user.name}
-          </option>
-        ))}
-      </select>
+      <div className="mb-4">
+        <label className="block text-sm text-gray-600 mb-1">
+          Assign to employee
+        </label>
+        <select
+          name="assignedTo"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          value={form.assignedTo}
+          onChange={handleChange}
+        >
+          <option value="">Unassigned</option>
+          {data?.users.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.name} ({user.email})
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Due date & Days */}
-      <div className="flex gap-3 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
         <input
           type="date"
           name="dueDate"
-          className="p-2 border rounded"
+          className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           value={form.dueDate}
           onChange={handleChange}
         />
@@ -145,8 +159,8 @@ export default function TaskForm({ onAdded }) {
           type="number"
           name="daysToComplete"
           min="0"
-          className="p-2 border rounded w-40"
-          placeholder="Days"
+          className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          placeholder="Days to complete"
           value={form.daysToComplete}
           onChange={handleChange}
         />
@@ -154,9 +168,9 @@ export default function TaskForm({ onAdded }) {
         <button
           type="submit"
           disabled={loading || !form.title.trim()}
-          className="ml-auto bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg disabled:opacity-50"
         >
-          {loading ? 'Adding...' : 'Add Task'}
+          {loading ? 'Creating...' : 'Create Task'}
         </button>
       </div>
     </form>

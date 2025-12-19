@@ -10,45 +10,58 @@ export default function TaskCard({
 }) {
   const [selectedUser, setSelectedUser] = useState('');
 
+  const statusStyles = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    in_progress: 'bg-blue-100 text-blue-800',
+    completed: 'bg-green-100 text-green-800',
+  };
+
   return (
-    <div className="card border rounded p-4 shadow-sm">
+    <div className="bg-white border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+      
       {/* Header */}
       <div className="flex justify-between items-start mb-2">
         <h3
-          className={`font-semibold ${
+          className={`text-base font-semibold ${
             task.status === 'completed'
               ? 'line-through text-gray-400'
-              : ''
+              : 'text-gray-800'
           }`}
         >
           {task.title}
         </h3>
 
-        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
-          {task.status}
+        <span
+          className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${
+            statusStyles[task.status]
+          }`}
+        >
+          {task.status.replace('_', ' ')}
         </span>
       </div>
 
       {/* Description */}
-      <p className="text-sm text-gray-600 mb-2">
-        {task.description}
-      </p>
+      {task.description && (
+        <p className="text-sm text-gray-600 mb-3">
+          {task.description}
+        </p>
+      )}
 
-      {/* Assignment info */}
-      <div className="text-xs text-gray-500 mb-3">
-        Assigned:
-        <span className="font-semibold ml-1">
+      {/* Assignment Info */}
+      <div className="text-xs text-gray-500 mb-4">
+        Assigned to:
+        <span className="ml-1 font-semibold text-gray-700">
           {task.assignedTo?.name || 'Unassigned'}
         </span>
       </div>
 
-      {/* 👨‍💼 MANAGER VIEW */}
+      {/* ================= MANAGER VIEW ================= */}
       {!employeeView && (
-        <>
+        <div className="border-t pt-3">
           <select
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
-            className="w-full border rounded px-2 py-1 text-sm mb-2"
+            className="w-full border rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Assign to employee</option>
             {users.map((u) => (
@@ -62,28 +75,28 @@ export default function TaskCard({
             <button
               onClick={() => onAssign(task.id, selectedUser)}
               disabled={!selectedUser}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm disabled:opacity-50"
             >
               Assign
             </button>
 
             <button
               onClick={() => onDelete(task)}
-              className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm"
             >
               Delete
             </button>
           </div>
-        </>
+        </div>
       )}
 
-      {/* 👷 EMPLOYEE VIEW */}
+      {/* ================= EMPLOYEE VIEW ================= */}
       {employeeView && (
-        <div className="flex gap-2 justify-end mt-3">
+        <div className="border-t pt-3 flex flex-wrap gap-2 justify-end">
           {task.status !== 'pending' && (
             <button
               onClick={() => onStatusChange(task.id, 'pending')}
-              className="px-3 py-1 text-xs bg-gray-200 rounded"
+              className="px-3 py-1.5 text-xs rounded-lg bg-gray-100 hover:bg-gray-200"
             >
               Pending
             </button>
@@ -92,7 +105,7 @@ export default function TaskCard({
           {task.status !== 'in_progress' && (
             <button
               onClick={() => onStatusChange(task.id, 'in_progress')}
-              className="px-3 py-1 text-xs bg-blue-500 text-white rounded"
+              className="px-3 py-1.5 text-xs rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
             >
               In Progress
             </button>
@@ -101,7 +114,7 @@ export default function TaskCard({
           {task.status !== 'completed' && (
             <button
               onClick={() => onStatusChange(task.id, 'completed')}
-              className="px-3 py-1 text-xs bg-green-500 text-white rounded"
+              className="px-3 py-1.5 text-xs rounded-lg bg-green-500 hover:bg-green-600 text-white"
             >
               Complete
             </button>
